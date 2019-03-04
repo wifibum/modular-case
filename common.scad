@@ -21,12 +21,13 @@ module connectors_female(angle, base_radius, height, wall_thickness) {
 			rotate_extrude($fn = 200) // works in openscad <2018 incl. thingiverse
 				translate([-base_radius + wall_thickness, height-5.7]) //0.3 to center scaled male pin
 					polygon(
-						points = [[0,0],[0,12],[1,15],[6.8,15],[6.8,5],[1.8,0], [1.5,5.7],[1.5,5.7+3.8],[1.5+2.5,5.7+6.3],[1.5+4.5,5.7+6.3],[1.5+4.5,5.7]],
-						paths = [[0,1,2,3,4,5], [6,7,8,9,10,11]]
+						points = [[-.5,0],[-.5,5.5],[0,5.5],[0,12],[1,15],[6.8,15],[6.8,5],[-.5,-2.3],
+                                  [1.5,5.7],[1.5,5.7+3.8],[1.5+2.5,5.7+6.3],[1.5+4.5,5.7+6.3],[1.5+4.5,5.7]],
+						paths = [[0,1,2,3,4,5,6,7], [8,9,10,11,12,13]]
 					);
 			// only needed for openscad <2018
-			translate([-3*base_radius,0,height-5.7])
-				cube([3*base_radius,width,13]);
+			translate([-3*base_radius,0,height-8])
+				cube([3*base_radius,width,15.3]);
 		}
 }
 
@@ -87,3 +88,48 @@ module venting_holes(angle, base_radius, base_height, xnum, ynum, twosided) {
 			}
 		}
 }
+
+// Add rim to top of module.  The connector_cutouts shoudl be an array of the angles
+// for each connector (what was passed in to connectors_male)
+rim_cutout_rotation_arc_length = 5.5; //5.20368;  // Cut out for connectors 
+                                            // (in arc lenght to handle scaling)
+module rim(base_radius, height, wall_thickness, connector_cutouts = [90, 270], rim_height = 1.5)
+{
+    translate([0,0,height - rim_height])
+        difference()
+        {
+            cylinder(r = base_radius - wall_thickness + .01,
+                     h = rim_height * 2);
+           
+            translate([0,0,rim_height])
+                cylinder(r = base_radius - wall_thickness - 1,
+                         h = rim_height + .01);
+            
+            translate([0, 0, -.01])
+                cylinder(r2 = base_radius - wall_thickness - 1,
+                         r1 = base_radius - wall_thickness + .01,
+                         h = rim_height + .01);
+            
+            translate([0,0,- .02])
+                cylinder(r = base_radius - wall_thickness - 1,
+                         h = (rim_height * 2) + .04);
+            
+            translate([0,0,rim_height - .005])
+                difference()
+                {
+                    cylinder(r = base_radius + 2,
+                             h = rim_height + 1);
+                    cylinder(r = base_radius - wall_thickness - .2,
+                             h = rim_height + 1);
+                }
+            
+            for (a = connector_cutouts)
+            {
+                rotate(a - 90)
+                    rotate(rim_cutout_rotation_arc_length / ((base_radius * 3.14) / 360))
+                        translate([-10, 0, -.01])
+                            cube([20, base_radius + 1, height + rim_height + .02]);
+            }
+        }
+}
+    

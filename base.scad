@@ -6,6 +6,10 @@
 base_diameter = 62.8; //[62.8:Small, 80:Medium, 100:Large, 130:XLarge]
 // thickness of outer wall
 wall_thickness = 3; //[2:1:5]
+// enable rim
+enable_rim = 0; // [0: No, 1: Yes]
+// rim height
+rim_height = 1.5; // [.5: .1: 2]
 
 
 /* [PCB Dimensions] */
@@ -17,6 +21,8 @@ board = 0; //[0: Custom, 1:Arduino_Nano, 2:Arduino_Mega, 3:Arduino_Uno, 4:Feathe
 board_width = 26; //[10:0.1:150]
 // length of a PCB  (only for Custom)
 board_length = 48; //[10:0.1:150]
+// Enable snap in standoff for board
+snapin_support = 1; // [0: No, 1: Yes]
 
 /* [Access Port Dimensions (only for Custom)] */
 
@@ -28,6 +34,7 @@ port_height = 6; //[4:1:30]
 port_ypos = 5; //[0:1:150]
 // position from bottom of pcb (negative is below)
 port_zpos = 0; //[-25:1:30]
+
 
 /* [Hidden] */
 
@@ -41,7 +48,7 @@ function base_height() = 30; //fixed, but needs to be fine-tuned to pcb+pins+con
 standoff_height = 12;
 standoff_width = wall_thickness;
 ground_clearance = 5;
-
+snap_fit_clearance = .3;
 
 // a single standoff with a small rest to keep a board from the ground
 // height: overall height; width: wall-thickness and nook,
@@ -53,8 +60,16 @@ module single_standoff(height, width, clearance) {
 				// outer pillars
 				difference() {
 					cube([width+wall_thickness, width+wall_thickness, height]);
-					cube([width, standoff_width, height]);
-				}
+                    if (snapin_support)
+                    {
+	                    cube([width, standoff_width, clearance + 2]);
+                        snap_fit_cutout(width, height, clearance);
+                    }
+                    else
+                    {
+                        cube([width, standoff_width, height]);
+                    }
+                }
 				// inner board rest
 				translate([width, width, 0])
 					rotate([0,0,180])
@@ -65,6 +80,36 @@ module single_standoff(height, width, clearance) {
 			}
 		}
 	}
+}
+
+module snap_fit_cutout(width, height, clearance)
+{
+ translate([0,0,clearance + 2])
+  polyhedron(
+    points = [
+  [  0,                         0,                          0 ],  //0
+  [ width,                      0,                          0 ],  //1
+  [ width,                      width,                      0 ],  //2
+  [  0,                         width,                      0 ],  //3
+  [  0,                         0,                          snap_fit_clearance ],  //4
+  [ width - snap_fit_clearance, 0,                          snap_fit_clearance ],  //5
+  [ width - snap_fit_clearance, width - snap_fit_clearance, snap_fit_clearance ],  //6
+  [  0,                         width - snap_fit_clearance, snap_fit_clearance ],  //7
+  [  0,                         0,                          height - clearance - 2],  //8
+  [ width + .2,                 0,                          height - clearance - 2],  //9
+  [ width + .2,                 width + .2,                 height - clearance - 2],  //10
+  [  0,                         width + .2,                 height - clearance - 2]], //11
+    faces = [
+  [0,1,2,3],  // bottom
+  [4,5,1,0],  // bottom front
+  [5,6,2,1],  // bottom right
+  [6,7,3,2],  // bottom back
+  [7,4,0,3], // bottom left
+  [8,9,5,4],  // top front
+  [9,10,6,5],  // top right
+  [10,11,7,6],  // top back
+  [11,8,4,7], // top left
+  [11,10,9,8]]);  // top
 }
 
 // place 4 standoffs around a rectangular board space
@@ -126,7 +171,12 @@ module _base(base_radius, wall_thickness, board_length, board_width, port_width,
 	port_access(base_radius, port_width, port_height, port_ypos, port_zpos, board_length, board_width) {
 		union() {
 			difference() {
-				shell(base_radius*2, base_height(), wall_thickness, true);
+                union()
+                {
+                    shell(base_radius*2, base_height(), wall_thickness, true);
+                    connectors_female(90, base_radius, base_height(), wall_thickness);
+                    connectors_female(270, base_radius, base_height(), wall_thickness);
+                }
 				venting_holes(0, base_radius, base_height(), 10, 5, true);
 			};
 
@@ -135,8 +185,8 @@ module _base(base_radius, wall_thickness, board_length, board_width, port_width,
 				cube([board_length, board_width, 2]);
 
 			standoffs(board_length, board_width, ground_clearance);
-			connectors_female(90, base_radius, base_height(), wall_thickness);
-			connectors_female(270, base_radius, base_height(), wall_thickness);
+            if (enable_rim == 1)
+                rim(base_radius, base_height(), wall_thickness, [90, 270], rim_height);
 		}
 	}
 }
@@ -170,3 +220,4 @@ module base(base_radius, wall_thickness, board, port_width, port_height, port_yp
 }
 
 base(base_radius, wall_thickness, board, port_width, port_height, port_ypos, port_zpos);
+

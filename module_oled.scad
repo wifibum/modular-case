@@ -5,6 +5,10 @@
 base_diameter = 62.8; //[62.8:Small, 80:Medium, 100:Large, 130:XLarge]
 // thickness of outer wall
 wall_thickness = 3; //[2:1:5]
+// enable rim
+enable_rim = 0; // [0: No, 1: Yes]
+// rim height
+rim_height = 1.5; // [.5: .1: 2]
 
 /* [OLED Dimensions] */
 
@@ -57,7 +61,7 @@ module oled(base_radius, wall_thickness, oled_width, oled_height, oled_pcb_width
 		difference(){
 			union(){
 				//base
-	    		empty(base_radius, oled_module_height(), wall_thickness);
+	    		empty(base_radius, oled_module_height(), wall_thickness, enable_rim, rim_height);
 	    		//frame
 	    		cutInner(base_radius - 2.5*wall_thickness, oled_module_height()){
 		    		cutOuter(base_radius - wall_thickness, oled_module_height()){

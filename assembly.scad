@@ -67,13 +67,26 @@ enclosure_width = 25; //[10:1:100]
 // radius of port access
 enclosure_port_radius = 4; //[2:1:20]
 
-/* [Dome Cap Dimensions] */
-create_dome_cap = true;
+/* [Lid Type] */
+// Lid
+lid_type = 2; // [0: none, 1: dome, 2: flat]
 
+/* [Dome Cap Dimensions] */
 // thickness of dome
 cap_dome_thickness = 1.5; //[2:0.5:5]
 // height of the dome cap
 cap_dome_height = 10; //[10:1:100]
+
+/* [Flat Lid Dimensions] */
+flat_lid_height = 10; //[10:1:100]
+// generate support for male connectors
+generate_support = 0; // [0: no, 1: yes]
+
+/* [Led Options] */
+// Create mount for LED
+led_hole = 1; // [0: no, 1: yes]
+// Diameter of LED.  Note, add .1 or .2 to ensure fit, most printers shrink holes a bit.
+led_diameter = 5.2; // [2:.1:10]
 
 /* [Hidden] */
 
@@ -87,6 +100,7 @@ use <base.scad>
 use <module_empty.scad>
 use <module_oled.scad>
 use <module_enclosure.scad>
+use <module_lid.scad>
 use <cap_dome.scad>
 
 enclosure_module_start = create_empty?base_height()+empty_height:base_height();
@@ -112,8 +126,13 @@ union() {
 			color(module_color)
 				oled(base_radius, wall_thickness, oled_width, oled_height, oled_pcb_width, oled_pcb_height, oled_y_position);
 
-    if (create_dome_cap)
+    if (lid_type == 1)
 		translate([0,0,dome_cap_start])
 			color(cap_color)
 				dome(base_radius, cap_dome_height, wall_thickness, cap_dome_thickness);
+    
+    if (lid_type == 2)
+		translate([0,0,dome_cap_start])
+			color(cap_color)
+                flat_lid(base_radius, flat_lid_height, wall_thickness, generate_support,  led_hole, led_diameter);        
 }
