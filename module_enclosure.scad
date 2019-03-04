@@ -9,7 +9,7 @@ wall_thickness = 3; //[2:1:5]
 // height of the module
 module_height = 18; //[18:1:100]
 // enable rim
-enable_rim = 1; // [0: No, 1: Yes]
+enable_rim = 0; // [0: No, 1: Yes]
 // rim height
 rim_height = 1.5; // [.5: .1: 2]
 
